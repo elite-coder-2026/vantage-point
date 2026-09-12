@@ -3,7 +3,12 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app import avatar as avatar_svc
+from app import comments as comments_svc
 from app import forgot_password as forgot_password_svc
+from app import likes as likes_svc
+from app import notify as notify_svc
+from app import posts as posts_svc
 from app import settings as settings_svc
 from app.auth import (
     SESSION_COOKIE_NAME,
@@ -14,8 +19,8 @@ from app.auth import (
     verify_password,
 )
 from app.db import get_conn
+from app.queries import bkmrk as bkmrk_q
 from app.queries import follows as follows_q
-from app.queries import posts as posts_q
 from app.queries import sessions as sessions_q
 from app.queries import users as users_q
 
@@ -165,7 +170,7 @@ async def feed_page(
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
     current_user = await _current_user(conn, current_user_id)
-    rows = await posts_q.get_feed(conn, current_user_id, 20, None)
+    rows = await posts_svc.list_feed(conn, current_user_id, 20, None)
 
     posts = []
     author_cache: dict[int, str] = {}
@@ -181,7 +186,7 @@ async def feed_page(
     )
 
 
-@router.post("/posts")
+@router.post("/posts/new")
 async def create_post_submit(
     request: Request,
     body: str = Form(...),
@@ -191,7 +196,7 @@ async def create_post_submit(
     if current_user_id is None:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    await posts_q.create_post(conn, current_user_id, body, None)
+    await posts_svc.create_text_post(conn, current_user_id, body)
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -220,8 +225,7 @@ async def profile_page(
         )
 
     if can_view:
-        rows = await posts_q.list_user_posts(conn, profile_user["id"], 20, None)
-        posts = [dict(r) for r in rows]
+        posts = await posts_svc.list_user_posts(conn, current_user_id, profile_user["id"], 20, None)
 
     return templates.TemplateResponse(
         request,
@@ -340,3 +344,147 @@ async def settings_unblock_user(
 
     await settings_svc.unblock(conn, current_user_id, target_id)
     return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/view-post/{post_id}", response_class=HTMLResponse)
+async def view_post_page(
+    request: Request,
+    post_id: int,
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    post = await posts_svc.get_post(conn, current_user_id, post_id)
+    if post is None:
+        return templates.TemplateResponse(
+            request, "base.html", {"current_user": None, "error": "Post not found"},
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    current_user = await _current_user(conn, current_user_id)
+    author = await users_q.get_user_by_id(conn, post["author_id"])
+
+    comment_rows = await comments_svc.get_comments(conn, current_user_id, post_id)
+    author_cache: dict[int, str] = {}
+    comments = []
+    for c in comment_rows:
+        commenter_id = c["user_id"]
+        if commenter_id not in author_cache:
+            commenter = await users_q.get_user_by_id(conn, commenter_id)
+            author_cache[commenter_id] = commenter["username"] if commenter else "unknown"
+        comments.append({**c, "username": author_cache[commenter_id]})
+
+    return templates.TemplateResponse(
+        request,
+        "post.html",
+        {
+            "current_user": current_user,
+            "post": post,
+            "author": author,
+            "comments": comments,
+        },
+    )
+
+
+def _safe_next(next_: str | None, post_id: int) -> str:
+    if next_ and next_.startswith("/") and not next_.startswith("//"):
+        return next_
+    return f"/view-post/{post_id}"
+
+
+@router.post("/view-post/{post_id}/comment")
+async def view_post_comment_submit(
+    request: Request,
+    post_id: int,
+    body: str = Form(...),
+    next: str | None = Form(None),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await comments_svc.create_comment(conn, post_id, current_user_id, body)
+    return RedirectResponse(_safe_next(next, post_id), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/view-post/{post_id}/like")
+async def view_post_like_submit(
+    post_id: int,
+    next: str | None = Form(None),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    if await likes_svc.liked_or_not(conn, post_id, current_user_id):
+        await likes_svc.unlike_post(conn, post_id, current_user_id)
+    else:
+        await likes_svc.like_post(conn, post_id, current_user_id)
+    return RedirectResponse(_safe_next(next, post_id), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/view-post/{post_id}/bookmark")
+async def view_post_bookmark_submit(
+    post_id: int,
+    next: str | None = Form(None),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    if await bkmrk_q.is_bookmarked(conn, post_id, current_user_id):
+        await bkmrk_q.delete_bookmark(conn, post_id, current_user_id)
+    else:
+        await bkmrk_q.create_bookmark(conn, post_id, current_user_id)
+    return RedirectResponse(_safe_next(next, post_id), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/view-post/{post_id}/delete")
+async def view_post_delete_submit(
+    post_id: int,
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await posts_svc.delete_post(conn, post_id, current_user_id)
+    return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/notifications", response_class=HTMLResponse)
+async def notifications_page(
+    request: Request,
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    current_user = await _current_user(conn, current_user_id)
+    notifications = await notify_svc.get_notifications(conn, current_user_id)
+    for n in notifications:
+        if n["by"]:
+            n["by"]["avatar_path"] = avatar_svc.avatar_url(n["by"]["avatar_path"])
+        if n["of"]:
+            n["of"]["avatar_path"] = avatar_svc.avatar_url(n["of"]["avatar_path"])
+
+    await notify_svc.mark_read(conn, current_user_id)
+
+    return templates.TemplateResponse(
+        request, "notifications.html", {"current_user": current_user, "notifications": notifications}
+    )
+
+
+@router.post("/notifications/clear")
+async def notifications_clear_submit(
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await notify_svc.clear_notifications(conn, current_user_id)
+    return RedirectResponse("/notifications", status_code=status.HTTP_303_SEE_OTHER)
