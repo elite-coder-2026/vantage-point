@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }}{% endblock %}
+{% block content %}
+<h1>{{ profile_user.display_name }} <span class="handle">@{{ profile_user.username }}</span></h1>
+{% if profile_user.bio %}<p>{{ profile_user.bio }}</p>{% endif %}
+
+{% if not can_view %}
+  <p class="notice">This account is private.</p>
+{% else %}
+  <ul class="post-list">
+    {% for post in posts %}
+    <li class="post">
+      <p class="post-body">{{ post.body }}</p>
+      <time>{{ post.created_at }}</time>
+    </li>
+    {% else %}
+    <li>No posts yet.</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}
