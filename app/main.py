@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.db import create_pool
-from app.routers import auth, users, follows, groups, posts, hashtags, pages
+from app.routers import auth, users, follows, groups, posts, hashtags, pages, settings
 
 
 @asynccontextmanager
@@ -25,3 +25,4 @@ app.include_router(groups.router)
 app.include_router(posts.router)
 app.include_router(hashtags.router)
 app.include_router(pages.router)
+app.include_router(settings.router)
