@@ -23,9 +23,12 @@ from app.queries import bkmrk as bkmrk_q
 from app.queries import follows as follows_q
 from app.queries import sessions as sessions_q
 from app.queries import users as users_q
+from app.timeago import normal_time, time_ago
 
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(directory="app/templates")
+templates.env.filters["time_ago"] = time_ago
+templates.env.filters["normal_time"] = normal_time
 
 
 async def _current_user(conn, current_user_id):
