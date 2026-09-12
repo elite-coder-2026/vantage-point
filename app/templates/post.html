@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Post{% endblock %}
+{% block content %}
+<div class="post-view">
+  <a class="post-author" href="/u/{{ author.username }}">{{ author.username }}</a>
+  <time>{{ post.created_at }}</time>
+
+  {% if post.body %}<p class="post-body">{{ post.body }}</p>{% endif %}
+
+  {% if post.type == "image" %}
+    <img src="{{ post.image_path }}" alt="" class="post-media">
+  {% elif post.type == "video" %}
+    <video src="{{ post.video_path }}" controls class="post-media"></video>
+  {% elif post.type == "audio" %}
+    <audio src="{{ post.audio_path }}" controls></audio>
+  {% elif post.type == "document" %}
+    <a href="{{ post.document_path }}" download>Download attachment</a>
+  {% elif post.type == "location" %}
+    <img src="{{ post.location_image_url }}" alt="Location" class="post-media">
+  {% elif post.type == "link" %}
+    <a href="{{ post.link_url }}" target="_blank" class="post-link">
+      {% if post.link_image_url %}<img src="{{ post.link_image_url }}" alt="" class="post-media">{% endif %}
+      <span>{{ post.link_title or post.link_url }}</span>
+    </a>
+  {% endif %}
+
+  <div class="post-actions">
+    {% if current_user %}
+    <form action="/view-post/{{ post.id }}/like" method="post" class="inline-form">
+      <button type="submit">{{ "Unlike" if post.liked_by_viewer else "Like" }} ({{ post.like_count }})</button>
+    </form>
+    <form action="/view-post/{{ post.id }}/bookmark" method="post" class="inline-form">
+      <button type="submit">{{ "Remove bookmark" if post.bookmarked_by_viewer else "Bookmark" }}</button>
+    </form>
+    {% if current_user.id == post.author_id %}
+    <form action="/view-post/{{ post.id }}/delete" method="post" class="inline-form">
+      <button type="submit">Delete</button>
+    </form>
+    {% endif %}
+    {% else %}
+    <span>{{ post.like_count }} likes</span>
+    {% endif %}
+    <span>{{ post.share_count }} shares</span>
+  </div>
+
+  <hr>
+
+  <h2>Comments</h2>
+  {% if current_user %}
+  <form action="/view-post/{{ post.id }}/comment" method="post" class="stacked-form">
+    <textarea name="body" placeholder="Add a comment..." required maxlength="1000"></textarea>
+    <button type="submit">Comment</button>
+  </form>
+  {% endif %}
+  <ul class="comment-list">
+    {% for comment in comments %}
+    <li class="comment">
+      <a href="/u/{{ comment.username }}">{{ comment.username }}</a>
+      <p>{{ comment.body }}</p>
+      <time>{{ comment.created_at }}</time>
+    </li>
+    {% else %}
+    <li>No comments yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
