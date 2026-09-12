@@ -1,5 +1,7 @@
 import asyncpg
 
+from app.queries.posts import POST_SELECT_SQL
+
 
 async def attach_hashtags(conn: asyncpg.Connection, post_id: int, tags: list[str]) -> None:
     for tag in tags:
@@ -21,16 +23,20 @@ async def attach_hashtags(conn: asyncpg.Connection, post_id: int, tags: list[str
         )
 
 
-async def posts_by_hashtag(conn: asyncpg.Connection, tag: str, limit: int) -> list[asyncpg.Record]:
+async def clear_hashtags(conn: asyncpg.Connection, post_id: int) -> None:
+    await conn.execute("DELETE FROM post_hashtags WHERE post_id = $1", post_id)
+
+
+async def posts_by_hashtag(
+    conn: asyncpg.Connection, viewer_id: int | None, tag: str, limit: int
+) -> list[asyncpg.Record]:
     return await conn.fetch(
-        """
-        SELECT p.id, p.author_id, p.group_id, p.body, p.created_at
-        FROM posts p
+        POST_SELECT_SQL + """
         JOIN post_hashtags ph ON ph.post_id = p.id
         JOIN hashtags h ON h.id = ph.hashtag_id
-        WHERE h.tag = $1 AND p.deleted_at IS NULL
+        WHERE h.tag = $2
         ORDER BY p.created_at DESC
-        LIMIT $2
+        LIMIT $3
         """,
-        tag, limit,
+        viewer_id, tag, limit,
     )
