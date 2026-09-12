@@ -181,13 +181,24 @@ async def feed_page(
     rows = await posts_svc.list_feed(conn, current_user_id, 20, None)
 
     posts = []
-    author_cache: dict[int, str] = {}
+    username_cache: dict[int, str] = {}
+
+    async def _username(user_id: int) -> str:
+        if user_id not in username_cache:
+            user = await users_q.get_user_by_id(conn, user_id)
+            username_cache[user_id] = user["username"] if user else "unknown"
+        return username_cache[user_id]
+
     for r in rows:
-        author_id = r["author_id"]
-        if author_id not in author_cache:
-            author = await users_q.get_user_by_id(conn, author_id)
-            author_cache[author_id] = author["username"] if author else "unknown"
-        posts.append({**dict(r), "author_username": author_cache[author_id]})
+        comment_rows = await comments_svc.get_comments(conn, current_user_id, r["id"], limit=3)
+        comments = [
+            {**c, "username": await _username(c["user_id"])} for c in comment_rows
+        ]
+        posts.append({
+            **dict(r),
+            "author_username": await _username(r["author_id"]),
+            "comments": comments,
+        })
 
     return templates.TemplateResponse(
         request, "feed.html", {"current_user": current_user, "posts": posts}
