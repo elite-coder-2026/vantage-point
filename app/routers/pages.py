@@ -21,6 +21,7 @@ from app.auth import (
 from app.db import get_conn
 from app.queries import bkmrk as bkmrk_q
 from app.queries import follows as follows_q
+from app.queries import notify as notify_q
 from app.queries import sessions as sessions_q
 from app.queries import users as users_q
 from app.timeago import normal_time, time_ago
@@ -34,7 +35,11 @@ templates.env.filters["normal_time"] = normal_time
 async def _current_user(conn, current_user_id):
     if current_user_id is None:
         return None
-    return await users_q.get_user_by_id(conn, current_user_id)
+    user = await users_q.get_user_by_id(conn, current_user_id)
+    if user is None:
+        return None
+    unread = await notify_q.count_unread(conn, current_user_id)
+    return {**user, "has_unread_notifications": unread > 0}
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -230,6 +235,10 @@ async def profile_page(
     if can_view:
         posts = await posts_svc.list_user_posts(conn, current_user_id, profile_user["id"], 20, None)
 
+    post_count = await posts_svc.post_count(conn, profile_user["id"])
+    follower_count = await follows_q.count_followers(conn, profile_user["id"])
+    following_count = await follows_q.count_following(conn, profile_user["id"])
+
     return templates.TemplateResponse(
         request,
         "profile.html",
@@ -238,6 +247,9 @@ async def profile_page(
             "profile_user": profile_user,
             "can_view": can_view,
             "posts": posts,
+            "post_count": post_count,
+            "follower_count": follower_count,
+            "following_count": following_count,
         },
     )
 
