@@ -226,17 +226,20 @@ async def profile_page(
     current_user_id: int | None = Depends(get_current_user_id_optional),
     conn: asyncpg.Connection = Depends(get_conn),
 ):
-    profile_user = await users_q.get_user_by_username_with_auth(conn, username)
-    if profile_user is None:
+    row = await users_q.get_user_by_username_with_auth(conn, username)
+    if row is None:
         return templates.TemplateResponse(
             request, "base.html", {"current_user": None, "error": "User not found"},
             status_code=status.HTTP_404_NOT_FOUND,
         )
+    profile_user = {**row, "avatar_path": avatar_svc.avatar_url(row["avatar_path"])}
 
     current_user = await _current_user(conn, current_user_id)
 
     can_view = True
     posts = []
+    videos = []
+    shares = []
     if profile_user["is_private"] and profile_user["id"] != current_user_id:
         can_view = (
             current_user_id is not None
@@ -245,6 +248,8 @@ async def profile_page(
 
     if can_view:
         posts = await posts_svc.list_user_posts(conn, current_user_id, profile_user["id"], 20, None)
+        videos = await posts_svc.list_videos(conn, profile_user["id"], 20)
+        shares = await posts_svc.list_shared_by(conn, current_user_id, profile_user["id"], 20, None)
 
     post_count = await posts_svc.post_count(conn, profile_user["id"])
     follower_count = await follows_q.count_followers(conn, profile_user["id"])
@@ -257,6 +262,8 @@ async def profile_page(
             "current_user": current_user,
             "profile_user": profile_user,
             "can_view": can_view,
+            "videos": videos,
+            "shares": shares,
             "posts": posts,
             "post_count": post_count,
             "follower_count": follower_count,
