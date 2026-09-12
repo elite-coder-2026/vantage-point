@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h1>Register</h1>
+<form action="/register" method="post" class="stacked-form">
+  <label>Username <input type="text" name="username" required autofocus></label>
+  <label>Email <input type="email" name="email" required></label>
+  <label>Display name <input type="text" name="display_name" required></label>
+  <label>Password <input type="password" name="password" required minlength="8"></label>
+  <button type="submit">Create account</button>
+</form>
+<p>Already have an account? <a href="/login">Log in</a></p>
+{% endblock %}
