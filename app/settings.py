@@ -51,6 +51,10 @@ async def change_password(
     return "Password changed"
 
 
+async def account_type(conn: asyncpg.Connection, user_id: int) -> str | None:
+    return await settings_q.get_account_type(conn, user_id)
+
+
 async def change_account_type(conn: asyncpg.Connection, user_id: int, value: str) -> str | None:
     await settings_q.update_account_type(conn, user_id, value)
     return await settings_q.get_account_type(conn, user_id)
