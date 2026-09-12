@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Vantage Point{% endblock %}</title>
-  <link rel="stylesheet" href="/static/style.css?v=8">
+  <link rel="stylesheet" href="/static/style.css?v=10">
 </head>
 <body>
   {% if current_user %}
@@ -12,7 +12,10 @@
     <nav class="sidebar">
       <a class="brand" href="/">Vantage Point</a>
       <a class="sidebar-link" href="/"><span class="sidebar-icon">⌂</span> Home</a>
-      <a class="sidebar-link" href="/notifications"><span class="sidebar-icon">♡</span> Notifications</a>
+      <a class="sidebar-link" href="/notifications">
+        <span class="sidebar-icon">♡{% if current_user.has_unread_notifications %}<span class="notif-dot"></span>{% endif %}</span>
+        Notifications
+      </a>
       <a class="sidebar-link" href="/u/{{ current_user.username }}"><span class="sidebar-icon">☺</span> Profile</a>
       <a class="sidebar-link" href="/settings"><span class="sidebar-icon">⚙</span> Settings</a>
       <form action="/logout" method="post">
