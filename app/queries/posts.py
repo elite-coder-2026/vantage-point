@@ -261,6 +261,21 @@ async def list_shared_posts(
     )
 
 
+async def list_shared_by_posts(
+    conn: asyncpg.Connection, viewer_id: int | None, share_by_id: int, limit: int, before_id: int | None,
+) -> list[asyncpg.Record]:
+    return await conn.fetch(
+        POST_SELECT_SQL + """
+        JOIN post_shares ps ON ps.post_id = p.id
+        WHERE ps.share_by = $2
+          AND ($4::bigint IS NULL OR ps.id < $4)
+        ORDER BY ps.id DESC
+        LIMIT $3
+        """,
+        viewer_id, share_by_id, limit, before_id,
+    )
+
+
 async def list_bookmarked_posts(
     conn: asyncpg.Connection, viewer_id: int, limit: int, before_id: int | None,
 ) -> list[asyncpg.Record]:
