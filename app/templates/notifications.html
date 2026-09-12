@@ -23,7 +23,7 @@
     {% else %}
       sent a notification ({{ n.type }}).
     {% endif %}
-    <time>{{ n.time }}</time>
+    <time data-timeago="{{ n.time.isoformat() }}" title="{{ n.time | normal_time }}">{{ n.time | time_ago }}</time>
   </li>
   {% else %}
   <li>No notifications yet.</li>
