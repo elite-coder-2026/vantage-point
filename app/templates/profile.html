@@ -1,27 +1,77 @@
 {% extends "base.html" %}
 {% block title %}{{ profile_user.username }}{% endblock %}
 {% block content %}
-<h1>{{ profile_user.display_name }} <span class="handle">@{{ profile_user.username }}</span></h1>
-{% if profile_user.bio %}<p>{{ profile_user.bio }}</p>{% endif %}
-
-<ul class="profile-stats">
-  <li><strong>{{ post_count }}</strong> posts</li>
-  <li><strong>{{ follower_count }}</strong> followers</li>
-  <li><strong>{{ following_count }}</strong> following</li>
-</ul>
+<div class="profile-header">
+  {% if profile_user.avatar_path %}
+  <img class="profile-avatar" src="{{ profile_user.avatar_path }}" alt="{{ profile_user.username }}">
+  {% else %}
+  <div class="profile-avatar profile-avatar-placeholder">{{ profile_user.username[0]|upper }}</div>
+  {% endif %}
+  <div class="profile-header-info">
+    <h1>{{ profile_user.username }}</h1>
+    <p class="profile-display-name">{{ profile_user.display_name }}</p>
+    {% if profile_user.bio %}<p class="profile-bio">{{ profile_user.bio }}</p>{% endif %}
+    <ul class="profile-stats">
+      <li><strong>{{ post_count }}</strong> posts</li>
+      <li><strong>{{ follower_count }}</strong> followers</li>
+      <li><strong>{{ following_count }}</strong> following</li>
+    </ul>
+  </div>
+</div>
 
 {% if not can_view %}
   <p class="notice">This account is private.</p>
 {% else %}
-  <ul class="post-list">
-    {% for post in posts %}
-    <li class="post">
-      <p class="post-body">{{ post.body }}</p>
-      <a href="/view-post/{{ post.id }}"><time>{{ post.created_at }}</time></a>
-    </li>
+  <div class="profile-tabs">
+    <button type="button" class="profile-tab active" data-tab="posts" data-tab-group="profile">
+      <span class="profile-tab-icon">▦</span> Posts
+    </button>
+    <button type="button" class="profile-tab" data-tab="videos" data-tab-group="profile">
+      <span class="profile-tab-icon">▶</span> Videos
+    </button>
+    <button type="button" class="profile-tab" data-tab="shares" data-tab-group="profile">
+      <span class="profile-tab-icon">⇄</span> Shares
+    </button>
+  </div>
+
+  <div class="profile-tab-panel" data-tab-panel="posts" data-tab-group="profile">
+    <ul class="post-list">
+      {% for post in posts %}
+      <li class="post">
+        <p class="post-body">{{ post.body }}</p>
+        <a href="/view-post/{{ post.id }}"><time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time></a>
+      </li>
+      {% else %}
+      <li>No posts yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="profile-tab-panel hidden" data-tab-panel="videos" data-tab-group="profile">
+    {% if videos %}
+    <div class="profile-video-grid">
+      {% for video in videos %}
+      <a href="/view-post/{{ video.id }}" class="profile-video-item">
+        <video src="{{ video.path }}" preload="metadata"></video>
+      </a>
+      {% endfor %}
+    </div>
     {% else %}
-    <li>No posts yet.</li>
-    {% endfor %}
-  </ul>
+    <p class="notice">No videos yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="profile-tab-panel hidden" data-tab-panel="shares" data-tab-group="profile">
+    <ul class="post-list">
+      {% for post in shares %}
+      <li class="post">
+        <p class="post-body">{{ post.body }}</p>
+        <a href="/view-post/{{ post.id }}"><time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time></a>
+      </li>
+      {% else %}
+      <li>No shares yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
 {% endif %}
 {% endblock %}
