@@ -1,4 +1,17 @@
 document.addEventListener("click", (event) => {
+  const tab = event.target.closest("[data-tab]");
+  if (tab) {
+    const group = tab.dataset.tabGroup;
+    document.querySelectorAll(`[data-tab-group="${group}"]`).forEach((el) => {
+      if (el.hasAttribute("data-tab")) {
+        el.classList.toggle("active", el === tab);
+      } else if (el.hasAttribute("data-tab-panel")) {
+        el.classList.toggle("hidden", el.dataset.tabPanel !== tab.dataset.tab);
+      }
+    });
+    return;
+  }
+
   const trigger = event.target.closest("[data-toggle]");
 
   if (trigger) {
