@@ -16,6 +16,7 @@ class UserPublic(BaseModel):
     display_name: str
     bio: str | None
     is_private: bool
+    avatar_path: str | None = None
     created_at: datetime
 
 
