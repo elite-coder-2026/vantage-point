@@ -11,7 +11,7 @@
     {% for post in posts %}
     <li class="post">
       <p class="post-body">{{ post.body }}</p>
-      <time>{{ post.created_at }}</time>
+      <a href="/view-post/{{ post.id }}"><time>{{ post.created_at }}</time></a>
     </li>
     {% else %}
     <li>No posts yet.</li>
