@@ -9,7 +9,10 @@
 <ul class="post-list">
   {% for post in posts %}
   <li class="post">
-    <a class="post-author" href="/u/{{ post.author_username }}">{{ post.author_username }}</a>
+    <div class="post-header">
+      <a class="post-author" href="/u/{{ post.author_username }}">{{ post.author_username }}</a>
+      <a href="/view-post/{{ post.id }}"><time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time></a>
+    </div>
     {% if post.body %}<p class="post-body">{{ post.body }}</p>{% endif %}
 
     {% if post.type == "image" %}
@@ -48,8 +51,6 @@
       <textarea name="body" placeholder="Add a comment..." required maxlength="1000"></textarea>
       <button type="submit">Comment</button>
     </form>
-
-    <a href="/view-post/{{ post.id }}"><time>{{ post.created_at.strftime("%b %-d, %Y · %-I:%M %p") }}</time></a>
   </li>
   {% else %}
   <li>Nothing here yet — follow someone to see their posts.</li>
