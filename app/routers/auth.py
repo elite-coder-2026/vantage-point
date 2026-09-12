@@ -3,6 +3,7 @@ import hashlib
 import asyncpg
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
+from app import avatar as avatar_svc
 from app.auth import (
     generate_session_token,
     get_current_user_id,
@@ -28,7 +29,7 @@ async def register(payload: UserCreate, conn: asyncpg.Connection = Depends(get_c
     row = await users_q.create_user(
         conn, payload.username, payload.email, hash_password(payload.password), payload.display_name
     )
-    return UserPublic(**row)
+    return UserPublic(**{**row, "avatar_path": avatar_svc.avatar_url(row["avatar_path"])})
 
 
 @router.post("/login", response_model=SessionOut)
@@ -54,6 +55,7 @@ async def login(
             display_name=row["display_name"],
             bio=row["bio"],
             is_private=row["is_private"],
+            avatar_path=avatar_svc.avatar_url(row["avatar_path"]),
             created_at=row["created_at"],
         ),
     )
