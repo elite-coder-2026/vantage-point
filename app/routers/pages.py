@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app import forgot_password as forgot_password_svc
+from app import settings as settings_svc
 from app.auth import (
     SESSION_COOKIE_NAME,
     generate_session_token,
@@ -232,3 +233,110 @@ async def profile_page(
             "posts": posts,
         },
     )
+
+
+async def _settings_context(conn, current_user, **extra):
+    user_id = current_user["id"]
+    return {
+        "current_user": current_user,
+        "account_type": await settings_svc.account_type(conn, user_id),
+        "email_privacy": await settings_svc.email_privacy(conn, user_id),
+        "mobile_privacy": await settings_svc.mobile_privacy(conn, user_id),
+        "blocked": await settings_svc.blocked_users(conn, user_id),
+        "login_history": await settings_svc.login_details(conn, user_id),
+        **extra,
+    }
+
+
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_page(
+    request: Request,
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    current_user = await _current_user(conn, current_user_id)
+    return templates.TemplateResponse(
+        request, "settings.html", await _settings_context(conn, current_user)
+    )
+
+
+@router.post("/settings/update-password")
+async def settings_update_password(
+    request: Request,
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    confirm_new_password: str = Form(...),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    current_user = await _current_user(conn, current_user_id)
+    message = await settings_svc.change_password(
+        conn, current_user_id, current_password, new_password, confirm_new_password
+    )
+    return templates.TemplateResponse(
+        request,
+        "settings.html",
+        await _settings_context(conn, current_user, password_message=message),
+    )
+
+
+@router.post("/settings/update-account-type")
+async def settings_update_account_type(
+    request: Request,
+    value: str = Form(...),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await settings_svc.change_account_type(conn, current_user_id, value)
+    return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/settings/update-email-privacy")
+async def settings_update_email_privacy(
+    request: Request,
+    value: str = Form(...),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await settings_svc.change_email_privacy(conn, current_user_id, value)
+    return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/settings/update-mobile-privacy")
+async def settings_update_mobile_privacy(
+    request: Request,
+    value: str = Form(...),
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await settings_svc.change_mobile_privacy(conn, current_user_id, value)
+    return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/settings/unblock-user/{target_id}")
+async def settings_unblock_user(
+    request: Request,
+    target_id: int,
+    current_user_id: int | None = Depends(get_current_user_id_optional),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    if current_user_id is None:
+        return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    await settings_svc.unblock(conn, current_user_id, target_id)
+    return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
