@@ -13,7 +13,22 @@
       <a class="post-author" href="/u/{{ post.author_username }}">{{ post.author_username }}</a>
       <a href="/view-post/{{ post.id }}"><time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time></a>
     </div>
+
+    <div class="post-quickstats">
+      <button type="button" class="post-quickstat" data-toggle="comment-form-{{ post.id }}">
+        <span class="post-quickstat-icon">💬</span> {{ post.comment_count }}
+      </button>
+      <form action="/view-post/{{ post.id }}/like" method="post" class="inline-form">
+        <input type="hidden" name="next" value="/">
+        <button type="submit" class="post-quickstat">
+          <span class="post-quickstat-icon {{ 'liked' if post.liked_by_viewer else '' }}">{{ "♥" if post.liked_by_viewer else "♡" }}</span> {{ post.like_count }}
+        </button>
+      </form>
+    </div>
+
     {% if post.body %}<p class="post-body">{{ post.body }}</p>{% endif %}
+
+    <div class="post-clearfix"></div>
 
     {% if post.type == "image" %}
       <img src="{{ post.image_path }}" alt="" class="post-media">
@@ -32,19 +47,16 @@
       </a>
     {% endif %}
 
-    <div class="post-stats">
-      <span>{{ post.like_count }} likes</span>
-      <a href="/view-post/{{ post.id }}">{{ post.comment_count }} comments</a>
-      <span>{{ post.share_count }} shares</span>
-    </div>
-
-    <div class="post-actions">
-      <form action="/view-post/{{ post.id }}/like" method="post" class="inline-form">
-        <input type="hidden" name="next" value="/">
-        <button type="submit" class="post-action-btn">{{ "Unlike" if post.liked_by_viewer else "Like" }}</button>
-      </form>
-      <button type="button" class="post-action-btn" data-toggle="comment-form-{{ post.id }}">Comment</button>
-    </div>
+    {% if post.comments %}
+    <ul class="post-comments-preview">
+      {% for comment in post.comments %}
+      <li><a href="/u/{{ comment.username }}">{{ comment.username }}</a> {{ comment.body }}</li>
+      {% endfor %}
+    </ul>
+    {% if post.comment_count > post.comments|length %}
+    <a href="/view-post/{{ post.id }}" class="post-comments-more">View all {{ post.comment_count }} comments</a>
+    {% endif %}
+    {% endif %}
 
     <form action="/view-post/{{ post.id }}/comment" method="post" class="post-comment-form hidden" id="comment-form-{{ post.id }}" data-toggle-target>
       <input type="hidden" name="next" value="/">
