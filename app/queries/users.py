@@ -24,6 +24,16 @@ async def get_user_by_id(conn: asyncpg.Connection, user_id: int) -> asyncpg.Reco
     )
 
 
+async def get_user_by_email(conn: asyncpg.Connection, email: str) -> asyncpg.Record | None:
+    return await conn.fetchrow(
+        """
+        SELECT id, username, email, display_name, bio, is_private, created_at
+        FROM users WHERE email = $1
+        """,
+        email,
+    )
+
+
 async def get_user_by_username_with_auth(conn: asyncpg.Connection, username: str) -> asyncpg.Record | None:
     return await conn.fetchrow(
         """
