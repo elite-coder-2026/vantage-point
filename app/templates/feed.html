@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Feed{% endblock %}
+{% block content %}
+<h1>Your feed</h1>
+<form action="/posts" method="post" class="stacked-form">
+  <textarea name="body" placeholder="What's happening?" required maxlength="2000"></textarea>
+  <button type="submit">Post</button>
+</form>
+<ul class="post-list">
+  {% for post in posts %}
+  <li class="post">
+    <a class="post-author" href="/u/{{ post.author_username }}">{{ post.author_username }}</a>
+    <p class="post-body">{{ post.body }}</p>
+    <time>{{ post.created_at }}</time>
+  </li>
+  {% else %}
+  <li>Nothing here yet — follow someone to see their posts.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
