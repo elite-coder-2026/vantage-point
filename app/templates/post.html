@@ -3,7 +3,7 @@
 {% block content %}
 <div class="post-view">
   <a class="post-author" href="/u/{{ author.username }}">{{ author.username }}</a>
-  <time>{{ post.created_at }}</time>
+  <time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time>
 
   {% if post.body %}<p class="post-body">{{ post.body }}</p>{% endif %}
 
@@ -57,7 +57,7 @@
     <li class="comment">
       <a href="/u/{{ comment.username }}">{{ comment.username }}</a>
       <p>{{ comment.body }}</p>
-      <time>{{ comment.created_at }}</time>
+      <time data-timeago="{{ comment.created_at.isoformat() }}" title="{{ comment.created_at | normal_time }}">{{ comment.created_at | time_ago }}</time>
     </li>
     {% else %}
     <li>No comments yet.</li>
