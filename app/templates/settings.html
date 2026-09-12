@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+
+<section>
+  <h2>Change password</h2>
+  {% if password_message %}<p class="notice">{{ password_message }}</p>{% endif %}
+  <form action="/settings/update-password" method="post" class="stacked-form">
+    <label>Current password <input type="password" name="current_password" required></label>
+    <label>New password <input type="password" name="new_password" required></label>
+    <label>Confirm new password <input type="password" name="confirm_new_password" required></label>
+    <button type="submit">Change password</button>
+  </form>
+</section>
+
+<section>
+  <h2>Account type</h2>
+  <form action="/settings/update-account-type" method="post" class="stacked-form">
+    <label>Type
+      <select name="value">
+        <option value="general" {% if account_type == "general" %}selected{% endif %}>General</option>
+        <option value="business" {% if account_type == "business" %}selected{% endif %}>Business</option>
+      </select>
+    </label>
+    <button type="submit">Save</button>
+  </form>
+</section>
+
+<section>
+  <h2>Privacy</h2>
+  <form action="/settings/update-email-privacy" method="post" class="stacked-form">
+    <label>Email visibility
+      <select name="value">
+        <option value="public" {% if email_privacy == "public" %}selected{% endif %}>Public</option>
+        <option value="friends" {% if email_privacy == "friends" %}selected{% endif %}>Friends</option>
+        <option value="private" {% if email_privacy == "private" %}selected{% endif %}>Private</option>
+      </select>
+    </label>
+    <button type="submit">Save</button>
+  </form>
+  <form action="/settings/update-mobile-privacy" method="post" class="stacked-form">
+    <label>Mobile visibility
+      <select name="value">
+        <option value="public" {% if mobile_privacy == "public" %}selected{% endif %}>Public</option>
+        <option value="friends" {% if mobile_privacy == "friends" %}selected{% endif %}>Friends</option>
+        <option value="private" {% if mobile_privacy == "private" %}selected{% endif %}>Private</option>
+      </select>
+    </label>
+    <button type="submit">Save</button>
+  </form>
+</section>
+
+<section>
+  <h2>Blocked users</h2>
+  <ul class="post-list">
+    {% for user in blocked %}
+    <li>
+      {{ user.display_name }} <span class="handle">@{{ user.username }}</span>
+      <form action="/settings/unblock-user/{{ user.id }}" method="post" class="inline-form">
+        <button type="submit">Unblock</button>
+      </form>
+    </li>
+    {% else %}
+    <li>You haven't blocked anyone.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <h2>Login history</h2>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>OS</th><th>Browser</th><th>IP</th><th>Logout</th></tr>
+    </thead>
+    <tbody>
+      {% for entry in login_history %}
+      <tr>
+        <td>{{ entry.time }}</td>
+        <td>{{ entry.os or "-" }}</td>
+        <td>{{ entry.browser or "-" }}</td>
+        <td>{{ entry.ip or "-" }}</td>
+        <td>{{ entry.logout }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No login history yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
