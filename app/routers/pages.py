@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app import forgot_password as forgot_password_svc
 from app.auth import (
     SESSION_COOKIE_NAME,
     generate_session_token,
@@ -91,6 +92,49 @@ async def register_submit(
         SESSION_COOKIE_NAME, token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 14,
     )
     return response
+
+
+@router.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    return templates.TemplateResponse(request, "forgot-password.html", {"current_user": None})
+
+
+@router.post("/forgot-password")
+async def forgot_password_submit(
+    request: Request,
+    email: str = Form(...),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    await forgot_password_svc.request_reset(conn, email)
+    return templates.TemplateResponse(
+        request, "forgot-password.html", {"current_user": None, "sent": True}
+    )
+
+
+@router.get("/reset-password/{token}", response_class=HTMLResponse)
+async def reset_password_page(request: Request, token: str):
+    return templates.TemplateResponse(
+        request, "reset-password.html", {"current_user": None, "token": token}
+    )
+
+
+@router.post("/reset-password/{token}")
+async def reset_password_submit(
+    request: Request,
+    token: str,
+    new_password: str = Form(...),
+    confirm_new_password: str = Form(...),
+    conn: asyncpg.Connection = Depends(get_conn),
+):
+    message = await forgot_password_svc.reset_password(conn, token, new_password, confirm_new_password)
+    if message != "Password reset":
+        return templates.TemplateResponse(
+            request,
+            "reset-password.html",
+            {"current_user": None, "token": token, "error": message},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/logout")
