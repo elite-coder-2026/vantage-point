@@ -4,6 +4,12 @@
 <h1>{{ profile_user.display_name }} <span class="handle">@{{ profile_user.username }}</span></h1>
 {% if profile_user.bio %}<p>{{ profile_user.bio }}</p>{% endif %}
 
+<ul class="profile-stats">
+  <li><strong>{{ post_count }}</strong> posts</li>
+  <li><strong>{{ follower_count }}</strong> followers</li>
+  <li><strong>{{ following_count }}</strong> following</li>
+</ul>
+
 {% if not can_view %}
   <p class="notice">This account is private.</p>
 {% else %}
