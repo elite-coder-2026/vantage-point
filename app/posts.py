@@ -280,6 +280,13 @@ async def list_shared(
     return [_row_to_dict(r) for r in rows]
 
 
+async def list_shared_by(
+    conn: asyncpg.Connection, viewer_id: int | None, share_by_id: int, limit: int, before_id: int | None
+) -> list[dict]:
+    rows = await posts_q.list_shared_by_posts(conn, viewer_id, share_by_id, limit, before_id)
+    return [_row_to_dict(r) for r in rows]
+
+
 async def list_bookmarked(
     conn: asyncpg.Connection, viewer_id: int, limit: int, before_id: int | None
 ) -> list[dict]:
