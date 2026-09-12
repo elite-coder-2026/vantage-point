@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<h1>Notifications</h1>
+<ul class="notification-list">
+  {% for n in notifications %}
+  <li class="notification {{ 'unread' if n.status == 'unread' else '' }}">
+    <a href="/u/{{ n.by.username }}">{{ n.by.username if n.by else "Someone" }}</a>
+    {% if n.type == "follow" %}
+      started following you.
+    {% elif n.type == "like" %}
+      liked your <a href="/view-post/{{ n.post_id }}">post</a>.
+    {% elif n.type == "comment" %}
+      commented on your <a href="/view-post/{{ n.post_id }}">post</a>.
+    {% elif n.type == "commentLike" %}
+      liked your <a href="/view-post/{{ n.post_id }}">comment</a>.
+    {% elif n.type == "share" %}
+      shared your <a href="/view-post/{{ n.post_id }}">post</a>.
+    {% elif n.type == "tag" %}
+      tagged you in a <a href="/view-post/{{ n.post_id }}">post</a>.
+    {% elif n.type == "recommend" %}
+      suggested you follow <a href="/u/{{ n.of.username }}">{{ n.of.username if n.of else "someone" }}</a>.
+    {% else %}
+      sent a notification ({{ n.type }}).
+    {% endif %}
+    <time>{{ n.time }}</time>
+  </li>
+  {% else %}
+  <li>No notifications yet.</li>
+  {% endfor %}
+</ul>
+{% if notifications %}
+<form action="/notifications/clear" method="post">
+  <button type="submit">Clear all</button>
+</form>
+{% endif %}
+{% endblock %}
