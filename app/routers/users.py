@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 
 from app import avatar as avatar_svc
 from app import posts as posts_svc
+from app import universal as universal_svc
 from app.auth import get_current_user_id
 from app.db import get_conn
-from app.queries import follows as follows_q
 from app.queries import users as users_q
 from app.schemas.posts import PostOut
 from app.schemas.users import UserPublic, UserUpdate
@@ -65,10 +65,8 @@ async def get_user_posts(
     if target is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
 
-    if target["is_private"] and user_id != current_user_id:
-        allowed = await follows_q.is_accepted_follower(conn, current_user_id, user_id)
-        if not allowed:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "This account is private")
+    if await universal_svc.is_private(conn, user_id, current_user_id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "This account is private")
 
     rows = await posts_svc.list_user_posts(conn, current_user_id, user_id, limit, before)
     return [PostOut(**r) for r in rows]
@@ -78,10 +76,8 @@ async def _check_visible(conn: asyncpg.Connection, user_id: int, current_user_id
     target = await users_q.get_user_by_id(conn, user_id)
     if target is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
-    if target["is_private"] and user_id != current_user_id:
-        allowed = await follows_q.is_accepted_follower(conn, current_user_id, user_id)
-        if not allowed:
-            raise HTTPException(status.HTTP_403_FORBIDDEN, "This account is private")
+    if await universal_svc.is_private(conn, user_id, current_user_id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "This account is private")
 
 
 @router.get("/{user_id}/tagged-posts", response_model=list[PostOut])

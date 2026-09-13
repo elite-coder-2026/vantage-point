@@ -10,6 +10,7 @@ from app import likes as likes_svc
 from app import notify as notify_svc
 from app import posts as posts_svc
 from app import settings as settings_svc
+from app import universal as universal_svc
 from app.auth import (
     SESSION_COOKIE_NAME,
     generate_session_token,
@@ -185,8 +186,8 @@ async def feed_page(
 
     async def _username(user_id: int) -> str:
         if user_id not in username_cache:
-            user = await users_q.get_user_by_id(conn, user_id)
-            username_cache[user_id] = user["username"] if user else "unknown"
+            username = await universal_svc.get_username_from_session(conn, user_id)
+            username_cache[user_id] = username or "unknown"
         return username_cache[user_id]
 
     for r in rows:
@@ -236,15 +237,10 @@ async def profile_page(
 
     current_user = await _current_user(conn, current_user_id)
 
-    can_view = True
     posts = []
     videos = []
     shares = []
-    if profile_user["is_private"] and profile_user["id"] != current_user_id:
-        can_view = (
-            current_user_id is not None
-            and await follows_q.is_accepted_follower(conn, current_user_id, profile_user["id"])
-        )
+    can_view = not await universal_svc.is_private(conn, profile_user["id"], current_user_id)
 
     if can_view:
         posts = await posts_svc.list_user_posts(conn, current_user_id, profile_user["id"], 20, None)
@@ -402,8 +398,8 @@ async def view_post_page(
     for c in comment_rows:
         commenter_id = c["user_id"]
         if commenter_id not in author_cache:
-            commenter = await users_q.get_user_by_id(conn, commenter_id)
-            author_cache[commenter_id] = commenter["username"] if commenter else "unknown"
+            username = await universal_svc.get_username_from_session(conn, commenter_id)
+            author_cache[commenter_id] = username or "unknown"
         comments.append({**c, "username": author_cache[commenter_id]})
 
     return templates.TemplateResponse(
