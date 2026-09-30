@@ -1,9 +1,32 @@
 {% extends "base.html" %}
 {% block title %}Settings{% endblock %}
+{% macro dropdown(label, name, options, current) %}
+{#- Custom replacement for a native select element: the hidden input carries the
+    same field name and value the settings routes already expect. Like a
+    native select, falls back to the first option when nothing matches. -#}
+{% set ns = namespace(value=options[0][0], text=options[0][1]) %}
+{% for value, text in options %}{% if value == current %}{% set ns.value = value %}{% set ns.text = text %}{% endif %}{% endfor %}
+<div class="field">
+  <span class="field-label">{{ label }}</span>
+  <div class="dropdown" data-dropdown>
+    <input type="hidden" name="{{ name }}" value="{{ ns.value }}">
+    <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-label="{{ label }}">
+      <span data-dropdown-label>{{ ns.text }}</span>
+      <svg class="icon icon-sm"><use href="#i-chevron"></use></svg>
+    </button>
+    <ul class="dropdown-menu" role="listbox" hidden>
+      {% for value, text in options %}
+      <li role="option" tabindex="-1" data-value="{{ value }}" aria-selected="{{ 'true' if value == ns.value else 'false' }}">{{ text }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endmacro %}
+
 {% block content %}
 <h1>Settings</h1>
 
-<section>
+<section class="card">
   <h2>Change password</h2>
   {% if password_message %}<p class="notice">{{ password_message }}</p>{% endif %}
   <form action="/settings/update-password" method="post" class="stacked-form">
@@ -14,44 +37,27 @@
   </form>
 </section>
 
-<section>
+<section class="card">
   <h2>Account type</h2>
   <form action="/settings/update-account-type" method="post" class="stacked-form">
-    <label>Type
-      <select name="value">
-        <option value="general" {% if account_type == "general" %}selected{% endif %}>General</option>
-        <option value="business" {% if account_type == "business" %}selected{% endif %}>Business</option>
-      </select>
-    </label>
+    {{ dropdown("Type", "value", [("general", "General"), ("business", "Business")], account_type) }}
     <button type="submit">Save</button>
   </form>
 </section>
 
-<section>
+<section class="card">
   <h2>Privacy</h2>
   <form action="/settings/update-email-privacy" method="post" class="stacked-form">
-    <label>Email visibility
-      <select name="value">
-        <option value="public" {% if email_privacy == "public" %}selected{% endif %}>Public</option>
-        <option value="friends" {% if email_privacy == "friends" %}selected{% endif %}>Friends</option>
-        <option value="private" {% if email_privacy == "private" %}selected{% endif %}>Private</option>
-      </select>
-    </label>
+    {{ dropdown("Email visibility", "value", [("public", "Public"), ("friends", "Friends"), ("private", "Private")], email_privacy) }}
     <button type="submit">Save</button>
   </form>
   <form action="/settings/update-mobile-privacy" method="post" class="stacked-form">
-    <label>Mobile visibility
-      <select name="value">
-        <option value="public" {% if mobile_privacy == "public" %}selected{% endif %}>Public</option>
-        <option value="friends" {% if mobile_privacy == "friends" %}selected{% endif %}>Friends</option>
-        <option value="private" {% if mobile_privacy == "private" %}selected{% endif %}>Private</option>
-      </select>
-    </label>
+    {{ dropdown("Mobile visibility", "value", [("public", "Public"), ("friends", "Friends"), ("private", "Private")], mobile_privacy) }}
     <button type="submit">Save</button>
   </form>
 </section>
 
-<section>
+<section class="card">
   <h2>Blocked users</h2>
   <ul class="post-list">
     {% for user in blocked %}
@@ -67,8 +73,9 @@
   </ul>
 </section>
 
-<section>
+<section class="card">
   <h2>Login history</h2>
+  <div class="table-wrap">
   <table>
     <thead>
       <tr><th>Time</th><th>OS</th><th>Browser</th><th>IP</th><th>Logout</th></tr>
@@ -87,5 +94,6 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </section>
 {% endblock %}

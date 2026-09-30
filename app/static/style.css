@@ -527,6 +527,68 @@ dialog.modal::backdrop { background: rgba(0, 0, 0, 0.7); }
 .stacked-form textarea:focus { border-color: var(--text-faint); }
 .stacked-form > button { align-self: flex-start; }
 
+/* ---------- Custom dropdown ---------- */
+
+.dropdown { position: relative; }
+.dropdown-toggle {
+  width: 100%;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-weight: 400;
+}
+.dropdown-toggle:hover { background: var(--surface-sunken); border-color: var(--elevated-border); }
+.dropdown-toggle .icon { color: var(--text-dim); transition: transform 0.15s; }
+.dropdown.is-open .dropdown-toggle { border-color: var(--text-faint); }
+.dropdown.is-open .dropdown-toggle .icon { transform: rotate(180deg); }
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 4px;
+  background: var(--elevated);
+  border: 1px solid var(--elevated-border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.dropdown-menu [role="option"] {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+}
+.dropdown-menu [role="option"]:hover,
+.dropdown-menu [role="option"]:focus { background: var(--hover); }
+.dropdown-menu [aria-selected="true"] { font-weight: 600; }
+.dropdown-menu [aria-selected="true"]::after { content: "✓"; color: var(--accent); }
+
+/* ---------- Settings ---------- */
+
+.card .post-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.card .post-list li:last-child { border-bottom: none; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--text-dim); font-weight: 600; background: var(--surface-sunken); }
+tbody tr:last-child td { border-bottom: none; }
+
 /* ---------- Logged-out pages ---------- */
 
 .site-header {

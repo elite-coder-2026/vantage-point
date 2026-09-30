@@ -207,3 +207,81 @@ document.addEventListener("keydown", (event) => {
   event.preventDefault();
   if (textarea.value.trim()) textarea.form.requestSubmit();
 });
+
+// --- Custom dropdowns (used instead of native select elements) ---------------
+
+const closeDropdown = (dropdown) => {
+  dropdown.querySelector(".dropdown-menu").hidden = true;
+  dropdown.querySelector(".dropdown-toggle").setAttribute("aria-expanded", "false");
+  dropdown.classList.remove("is-open");
+};
+
+const openDropdown = (dropdown) => {
+  document.querySelectorAll("[data-dropdown].is-open").forEach(closeDropdown);
+  const menu = dropdown.querySelector(".dropdown-menu");
+  menu.hidden = false;
+  dropdown.querySelector(".dropdown-toggle").setAttribute("aria-expanded", "true");
+  dropdown.classList.add("is-open");
+  (menu.querySelector('[aria-selected="true"]') || menu.querySelector('[role="option"]'))?.focus();
+};
+
+const chooseOption = (dropdown, option) => {
+  dropdown.querySelector('input[type="hidden"]').value = option.dataset.value;
+  dropdown.querySelector("[data-dropdown-label]").textContent = option.textContent.trim();
+  dropdown.querySelectorAll('[role="option"]').forEach((el) => {
+    el.setAttribute("aria-selected", el === option ? "true" : "false");
+  });
+  closeDropdown(dropdown);
+  dropdown.querySelector(".dropdown-toggle").focus();
+};
+
+document.addEventListener("click", (event) => {
+  const dropdown = event.target.closest("[data-dropdown]");
+
+  // Click outside: close every open dropdown.
+  document.querySelectorAll("[data-dropdown].is-open").forEach((open) => {
+    if (open !== dropdown) closeDropdown(open);
+  });
+  if (!dropdown) return;
+
+  const option = event.target.closest('[role="option"]');
+  if (option) {
+    chooseOption(dropdown, option);
+    return;
+  }
+
+  if (event.target.closest(".dropdown-toggle")) {
+    dropdown.classList.contains("is-open") ? closeDropdown(dropdown) : openDropdown(dropdown);
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  const dropdown = event.target.closest?.("[data-dropdown]");
+  if (!dropdown) return;
+
+  const isOpen = dropdown.classList.contains("is-open");
+  const options = [...dropdown.querySelectorAll('[role="option"]')];
+  const index = options.indexOf(document.activeElement);
+
+  if (!isOpen) {
+    if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      openDropdown(dropdown);
+    }
+    return;
+  }
+
+  if (event.key === "Escape" || event.key === "Tab") {
+    closeDropdown(dropdown);
+    if (event.key === "Escape") dropdown.querySelector(".dropdown-toggle").focus();
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault();
+    options[Math.min(index + 1, options.length - 1)]?.focus();
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    options[Math.max(index - 1, 0)]?.focus();
+  } else if ((event.key === "Enter" || event.key === " ") && index >= 0) {
+    event.preventDefault();
+    chooseOption(dropdown, options[index]);
+  }
+});
