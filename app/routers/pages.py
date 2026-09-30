@@ -1,5 +1,7 @@
+from urllib.parse import quote
+
 import asyncpg
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -202,21 +204,40 @@ async def feed_page(
         })
 
     return templates.TemplateResponse(
-        request, "feed.html", {"current_user": current_user, "posts": posts}
+        request, "feed.html",
+        {"current_user": current_user, "posts": posts, "error": request.query_params.get("error")},
     )
 
 
 @router.post("/posts/new")
 async def create_post_submit(
     request: Request,
-    body: str = Form(...),
+    body: str = Form(""),
+    media: UploadFile | None = File(None),
     current_user_id: int | None = Depends(get_current_user_id_optional),
     conn: asyncpg.Connection = Depends(get_conn),
 ):
     if current_user_id is None:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    await posts_svc.create_text_post(conn, current_user_id, body)
+    # Browsers send an empty file part when no file was picked.
+    file_name = media.filename if media is not None else ""
+    ext = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+
+    try:
+        if not file_name:
+            if not body.strip():
+                raise ValueError("write something or attach a video/photo")
+            await posts_svc.create_text_post(conn, current_user_id, body)
+        elif ext in posts_svc._VIDEO_EXTS:
+            await posts_svc.create_video_post(conn, current_user_id, body, await media.read(), file_name)
+        elif ext in posts_svc._IMAGE_EXTS:
+            await posts_svc.create_image_post(conn, current_user_id, body, await media.read(), file_name)
+        else:
+            raise ValueError(f"file type .{ext} is not allowed")
+    except ValueError as exc:
+        return RedirectResponse(f"/?error={quote(str(exc))}", status_code=status.HTTP_303_SEE_OTHER)
+
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
 
