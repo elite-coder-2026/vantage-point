@@ -74,3 +74,136 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshTimeAgoElements();
   setInterval(refreshTimeAgoElements, 30000);
 });
+
+document.addEventListener("change", (event) => {
+  const input = event.target.closest("[data-file-name-target]");
+  if (!input) return;
+  const target = document.getElementById(input.dataset.fileNameTarget);
+  if (target) target.textContent = input.files.length ? input.files[0].name : "";
+});
+
+// --- Create-post modal -----------------------------------------------------
+
+document.addEventListener("click", (event) => {
+  const opener = event.target.closest("[data-open-modal]");
+  if (opener) {
+    const dialog = document.getElementById(opener.dataset.openModal);
+    if (dialog && !dialog.open) dialog.showModal();
+    return;
+  }
+
+  const closer = event.target.closest("[data-close-modal]");
+  if (closer) {
+    closer.closest("dialog")?.close();
+    return;
+  }
+
+  // A click that lands on the <dialog> itself (not its card) is the backdrop.
+  if (event.target instanceof HTMLDialogElement) event.target.close();
+});
+
+// --- Drop zone (the native file input is never shown) ----------------------
+
+const showDropzonePreview = (zone, file) => {
+  const preview = zone.querySelector("[data-dropzone-preview]");
+  const empty = zone.querySelector("[data-dropzone-empty]");
+  if (!preview || !empty) return;
+
+  preview.querySelectorAll("img, video").forEach((el) => URL.revokeObjectURL(el.src));
+  preview.replaceChildren();
+
+  if (!file) {
+    preview.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+
+  const media = document.createElement(file.type.startsWith("video/") ? "video" : "img");
+  media.src = URL.createObjectURL(file);
+  if (media.tagName === "VIDEO") {
+    media.muted = true;
+    media.controls = true;
+  }
+  preview.append(media);
+  preview.hidden = false;
+  empty.hidden = true;
+};
+
+document.addEventListener("click", (event) => {
+  const pick = event.target.closest("[data-dropzone-pick]");
+  if (!pick) return;
+  pick.closest("[data-dropzone]")?.querySelector('input[type="file"]')?.click();
+});
+
+document.addEventListener("change", (event) => {
+  const zone = event.target.closest("[data-dropzone]");
+  if (!zone || event.target.type !== "file") return;
+  showDropzonePreview(zone, event.target.files[0]);
+});
+
+["dragenter", "dragover"].forEach((type) => {
+  document.addEventListener(type, (event) => {
+    const zone = event.target.closest?.("[data-dropzone]");
+    if (!zone) return;
+    event.preventDefault();
+    zone.classList.add("is-dragging");
+  });
+});
+
+document.addEventListener("dragleave", (event) => {
+  const zone = event.target.closest?.("[data-dropzone]");
+  if (zone && !zone.contains(event.relatedTarget)) zone.classList.remove("is-dragging");
+});
+
+document.addEventListener("drop", (event) => {
+  const zone = event.target.closest?.("[data-dropzone]");
+  if (!zone) return;
+  event.preventDefault();
+  zone.classList.remove("is-dragging");
+
+  const input = zone.querySelector('input[type="file"]');
+  if (!input || !event.dataTransfer.files.length) return;
+  input.files = event.dataTransfer.files;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+});
+
+// Reset the composer whenever the modal closes without posting.
+document.querySelectorAll("dialog.modal").forEach((dialog) => {
+  dialog.addEventListener("close", () => {
+    const form = dialog.querySelector("form");
+    const zone = dialog.querySelector("[data-dropzone]");
+    if (!form || !zone) return;
+    form.reset();
+    showDropzonePreview(zone, null);
+    const fileName = document.getElementById("composer-file-name");
+    if (fileName) fileName.textContent = "";
+  });
+});
+
+// --- Feed comments -----------------------------------------------------------
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-focus]");
+  if (!trigger) return;
+  document.getElementById(trigger.dataset.focus)?.querySelector("textarea")?.focus();
+});
+
+const syncCommentField = (textarea) => {
+  const form = textarea.closest(".feed-comment-form");
+  if (!form) return;
+  form.classList.toggle("has-text", textarea.value.trim().length > 0);
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
+};
+
+document.addEventListener("input", (event) => {
+  if (event.target.matches(".feed-comment-form textarea")) syncCommentField(event.target);
+});
+
+document.addEventListener("keydown", (event) => {
+  const textarea = event.target;
+  if (!textarea.matches?.(".feed-comment-form textarea")) return;
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  if (textarea.value.trim()) textarea.form.requestSubmit();
+});

@@ -1,71 +1,118 @@
 {% extends "base.html" %}
 {% block title %}Feed{% endblock %}
+{% block main_class %}feed{% endblock %}
 {% block content %}
-<h1>Your feed</h1>
-<form action="/posts/new" method="post" class="stacked-form">
-  <textarea name="body" placeholder="What's happening?" required maxlength="2000"></textarea>
-  <button type="submit">Post</button>
-</form>
-<ul class="post-list">
+<h1 class="visually-hidden">Your feed</h1>
+<ul class="feed-list">
   {% for post in posts %}
-  <li class="post">
-    <div class="post-header">
-      <a class="post-author" href="/u/{{ post.author_username }}">{{ post.author_username }}</a>
-      <a href="/view-post/{{ post.id }}"><time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time></a>
-    </div>
+  <li>
+    <article class="feed-post">
+      <header class="feed-post-header">
+        <a class="avatar avatar-sm" href="/u/{{ post.author_username }}" aria-hidden="true" tabindex="-1">{{ post.author_username[0]|upper }}</a>
+        <div class="feed-post-meta">
+          <a class="feed-post-author" href="/u/{{ post.author_username }}">{{ post.author_username }}</a>
+          <span class="dot" aria-hidden="true">•</span>
+          <a class="feed-post-time" href="/view-post/{{ post.id }}"><time data-timeago="{{ post.created_at.isoformat() }}" title="{{ post.created_at | normal_time }}">{{ post.created_at | time_ago }}</time></a>
+        </div>
+        <a class="icon-button feed-post-more" href="/view-post/{{ post.id }}" aria-label="More options">
+          <svg class="icon"><use href="#i-more"></use></svg>
+        </a>
+      </header>
 
-    <div class="post-quickstats">
-      <button type="button" class="post-quickstat" data-toggle="comment-form-{{ post.id }}">
-        <span class="post-quickstat-icon">💬</span> {{ post.comment_count }}
-      </button>
-      <form action="/view-post/{{ post.id }}/like" method="post" class="inline-form">
-        <input type="hidden" name="next" value="/">
-        <button type="submit" class="post-quickstat">
-          <span class="post-quickstat-icon {{ 'liked' if post.liked_by_viewer else '' }}">{{ "♥" if post.liked_by_viewer else "♡" }}</span> {{ post.like_count }}
-        </button>
-      </form>
-    </div>
+      {% if post.type == "image" %}
+        <div class="feed-post-media"><img src="{{ post.image_path }}" alt=""></div>
+      {% elif post.type == "video" %}
+        <div class="feed-post-media"><video src="{{ post.video_path }}" controls playsinline preload="metadata"></video></div>
+      {% elif post.type == "location" %}
+        <div class="feed-post-media"><img src="{{ post.location_image_url }}" alt="Location"></div>
+      {% elif post.type == "audio" %}
+        <div class="feed-post-attachment"><audio src="{{ post.audio_path }}" controls></audio></div>
+      {% elif post.type == "document" %}
+        <div class="feed-post-attachment"><a href="{{ post.document_path }}" download>Download attachment</a></div>
+      {% elif post.type == "link" %}
+        {% if post.link_image_url %}<div class="feed-post-media"><img src="{{ post.link_image_url }}" alt=""></div>{% endif %}
+        <div class="feed-post-attachment">
+          <a href="{{ post.link_url }}" target="_blank" rel="noopener">{{ post.link_title or post.link_url }}</a>
+        </div>
+      {% else %}
+        {% set text = post.body or "" %}
+        <div class="feed-post-text {{ 'is-long' if text|length > 180 else ('is-medium' if text|length > 80 else '') }}">
+          <p>{{ text }}</p>
+        </div>
+      {% endif %}
 
-    {% if post.body %}<p class="post-body">{{ post.body }}</p>{% endif %}
+      <div class="feed-post-footer">
+        <div class="feed-post-actions">
+          <form action="/view-post/{{ post.id }}/like" method="post" class="inline-form">
+            <input type="hidden" name="next" value="/">
+            <button type="submit" class="icon-button {{ 'is-liked' if post.liked_by_viewer }}" aria-label="{{ 'Unlike' if post.liked_by_viewer else 'Like' }}" aria-pressed="{{ 'true' if post.liked_by_viewer else 'false' }}">
+              <svg class="icon"><use href="#i-heart"></use></svg>
+            </button>
+          </form>
+          <button type="button" class="icon-button" data-focus="comment-form-{{ post.id }}" aria-label="Comment">
+            <svg class="icon"><use href="#i-comment"></use></svg>
+          </button>
+          <button type="button" class="icon-button" disabled title="Sharing isn't available yet" aria-label="Share (not available yet)">
+            <svg class="icon"><use href="#i-share"></use></svg>
+          </button>
+          <form action="/view-post/{{ post.id }}/bookmark" method="post" class="inline-form feed-post-save">
+            <input type="hidden" name="next" value="/">
+            <button type="submit" class="icon-button {{ 'is-saved' if post.bookmarked_by_viewer }}" aria-label="{{ 'Remove bookmark' if post.bookmarked_by_viewer else 'Bookmark' }}" aria-pressed="{{ 'true' if post.bookmarked_by_viewer else 'false' }}">
+              <svg class="icon"><use href="#i-bookmark"></use></svg>
+            </button>
+          </form>
+        </div>
 
-    <div class="post-clearfix"></div>
+        <p class="feed-post-likes">{{ post.like_count }} {{ "like" if post.like_count == 1 else "likes" }}</p>
 
-    {% if post.type == "image" %}
-      <img src="{{ post.image_path }}" alt="" class="post-media">
-    {% elif post.type == "video" %}
-      <video src="{{ post.video_path }}" controls class="post-media"></video>
-    {% elif post.type == "audio" %}
-      <audio src="{{ post.audio_path }}" controls class="post-audio"></audio>
-    {% elif post.type == "document" %}
-      <a href="{{ post.document_path }}" download>Download attachment</a>
-    {% elif post.type == "location" %}
-      <img src="{{ post.location_image_url }}" alt="Location" class="post-media">
-    {% elif post.type == "link" %}
-      <a href="{{ post.link_url }}" target="_blank" class="post-link">
-        {% if post.link_image_url %}<img src="{{ post.link_image_url }}" alt="" class="post-media">{% endif %}
-        <span>{{ post.link_title or post.link_url }}</span>
-      </a>
-    {% endif %}
+        {% if post.body and post.type != "text" %}
+        <p class="feed-post-caption"><a href="/u/{{ post.author_username }}">{{ post.author_username }}</a> {{ post.body }}</p>
+        {% endif %}
 
-    {% if post.comments %}
-    <ul class="post-comments-preview">
-      {% for comment in post.comments %}
-      <li><a href="/u/{{ comment.username }}">{{ comment.username }}</a> {{ comment.body }}</li>
-      {% endfor %}
-    </ul>
-    {% if post.comment_count > post.comments|length %}
-    <a href="/view-post/{{ post.id }}" class="post-comments-more">View all {{ post.comment_count }} comments</a>
-    {% endif %}
-    {% endif %}
+        {% if post.comment_count > post.comments|length %}
+        <a href="/view-post/{{ post.id }}" class="feed-post-muted">View all {{ post.comment_count }} comments</a>
+        {% endif %}
 
-    <form action="/view-post/{{ post.id }}/comment" method="post" class="post-comment-form hidden" id="comment-form-{{ post.id }}" data-toggle-target>
-      <input type="hidden" name="next" value="/">
-      <textarea name="body" placeholder="Add a comment..." required maxlength="1000"></textarea>
-      <button type="submit">Comment</button>
-    </form>
+        {% if post.comments %}
+        <ul class="feed-post-comments">
+          {% for comment in post.comments %}
+          <li><a href="/u/{{ comment.username }}">{{ comment.username }}</a> {{ comment.body }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        <form action="/view-post/{{ post.id }}/comment" method="post" class="feed-comment-form" id="comment-form-{{ post.id }}">
+          <input type="hidden" name="next" value="/">
+          <textarea name="body" placeholder="Add a comment…" aria-label="Add a comment" required maxlength="1000" rows="1"></textarea>
+          <button type="submit" class="text-button">Post</button>
+        </form>
+      </div>
+    </article>
   </li>
   {% else %}
-  <li>Nothing here yet — follow someone to see their posts.</li>
+  <li class="feed-empty">
+    <svg class="icon icon-xl"><use href="#i-media"></use></svg>
+    <h2>Nothing here yet</h2>
+    <p>Follow someone to see their posts, or share your first one.</p>
+    <button type="button" class="button" data-open-modal="create-modal">Create a post</button>
+  </li>
   {% endfor %}
 </ul>
+{% endblock %}
+
+{% block aside %}
+<aside class="feed-aside">
+  <section class="aside-card">
+    <a class="avatar avatar-md" href="/u/{{ current_user.username }}" aria-hidden="true" tabindex="-1">{{ current_user.username[0]|upper }}</a>
+    <div class="aside-user">
+      <a href="/u/{{ current_user.username }}"><strong>{{ current_user.username }}</strong></a>
+      <span>{{ current_user.display_name }}</span>
+    </div>
+  </section>
+  <section class="aside-card aside-suggestions">
+    <h2>Suggested for you</h2>
+    <p>Suggestions will show up here once there are more people to follow.</p>
+  </section>
+  <p class="aside-footer">© 2026 Vantage Point</p>
+</aside>
 {% endblock %}
