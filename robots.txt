@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://elite-coder-2026.github.io/vantage-point/sitemap.xml

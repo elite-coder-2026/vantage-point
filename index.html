@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vantage Point – FastAPI &amp; PostgreSQL Social Network Engine</title>
+<meta name="description" content="Vantage Point is an open-source, Instagram-style social networking engine built with Python, FastAPI, PostgreSQL, raw parameterized SQL and server-rendered Jinja2 templates.">
+<meta name="keywords" content="Vantage Point, social network, FastAPI, PostgreSQL, Python, Jinja2, raw SQL, no ORM, Instagram clone, open source, portfolio project">
+<meta name="author" content="Darrell Parkhouse">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="https://elite-coder-2026.github.io/vantage-point/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vantage Point">
+<meta property="og:title" content="Vantage Point – FastAPI &amp; PostgreSQL Social Network Engine">
+<meta property="og:description" content="An open-source social networking engine built with FastAPI, PostgreSQL, raw parameterized SQL and Jinja2.">
+<meta property="og:url" content="https://elite-coder-2026.github.io/vantage-point/">
+<meta property="og:image" content="https://elite-coder-2026.github.io/vantage-point/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vantage Point – FastAPI &amp; PostgreSQL Social Network Engine">
+<meta name="twitter:description" content="An open-source social networking engine built with FastAPI, PostgreSQL, raw parameterized SQL and Jinja2.">
+<meta name="twitter:image" content="https://elite-coder-2026.github.io/vantage-point/og-image.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "Vantage Point",
+  "description": "A lightweight, full-featured social networking web application built with FastAPI, PostgreSQL, raw parameterized SQL and server-rendered Jinja2 templates.",
+  "url": "https://elite-coder-2026.github.io/vantage-point/",
+  "codeRepository": "https://github.com/elite-coder-2026/vantage-point",
+  "programmingLanguage": ["Python", "SQL", "JavaScript", "HTML", "CSS"],
+  "runtimePlatform": "Python 3.11+",
+  "license": "https://opensource.org/licenses/MIT",
+  "keywords": "FastAPI, PostgreSQL, social network, Jinja2, raw SQL",
+  "author": {
+    "@type": "Person",
+    "name": "Darrell Parkhouse",
+    "url": "https://github.com/elite-coder-2026"
+  }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#000;--surface:#121212;--surface-2:#1a1a1a;--border:#262626;
+  --text:#f5f5f5;--muted:#a8a8a8;--accent:#0095f6;
+  --grad:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#fafafa;--surface:#fff;--surface-2:#f2f2f2;--border:#dbdbdb;
+    --text:#0f0f0f;--muted:#5e5e5e;--accent:#0074cc;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:16px;background:var(--surface);padding:8px 12px;z-index:10}
+
+header.nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+header.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--text);font-size:18px}
+.brand:hover{text-decoration:none}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--grad);display:grid;place-items:center}
+.logo svg{width:16px;height:16px}
+nav ul{display:flex;gap:22px;list-style:none}
+nav a{color:var(--muted);font-weight:500;font-size:14px}
+nav a:hover{color:var(--text);text-decoration:none}
+@media (max-width:640px){nav ul{display:none}}
+
+.hero{padding:96px 0 72px;text-align:center}
+.eyebrow{display:inline-block;font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:6px 14px;margin-bottom:24px}
+h1{font-size:clamp(40px,7vw,72px);line-height:1.05;letter-spacing:-.03em;font-weight:800}
+h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:680px;margin:22px auto 0;color:var(--muted);font-size:clamp(17px,2.2vw,19px)}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:10px;font-weight:600;font-size:15px}
+.btn:hover{text-decoration:none;filter:brightness(1.1)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{border:1px solid var(--border);color:var(--text);background:var(--surface)}
+.btn svg{width:18px;height:18px}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.badge{font:500 12px var(--mono);padding:5px 10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted)}
+
+section{padding:72px 0;border-top:1px solid var(--border)}
+h2{font-size:clamp(28px,4vw,38px);letter-spacing:-.02em;font-weight:800;margin-bottom:12px}
+.sub{color:var(--muted);max-width:640px;margin-bottom:40px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px}
+.card .ic{width:40px;height:40px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;margin-bottom:16px;color:var(--accent)}
+.card .ic svg{width:20px;height:20px}
+.card h3{font-size:18px;margin-bottom:8px}
+.card p{color:var(--muted);font-size:15px}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);border:1px solid var(--border);padding:1px 6px;border-radius:5px}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--border);font-size:15px;vertical-align:top}
+th{background:var(--surface-2);font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+td:nth-child(3){color:var(--muted)}
+
+pre{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;overflow-x:auto;font:14px/1.75 var(--mono)}
+pre .c{color:var(--muted)}
+pre .d{color:var(--accent)}
+
+footer{border-top:1px solid var(--border);padding:40px 0;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Vantage Point home">
+      <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><rect x="3" y="3" width="18" height="18" rx="5"/></svg></span>
+      Vantage Point
+    </a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#stack">Tech Stack</a></li>
+        <li><a href="#layout">Project Layout</a></li>
+        <li><a href="https://github.com/elite-coder-2026/vantage-point">GitHub</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="hero" id="top">
+    <div class="wrap">
+      <span class="eyebrow">Open-source · Python 3.11+ · MIT</span>
+      <h1>High-Performance<br><span>Social Networking Engine</span></h1>
+      <p class="lead"><strong>Vantage Point</strong> is a lightweight, full-featured social networking web application built with <strong>FastAPI</strong>, <strong>PostgreSQL</strong>, raw parameterized SQL queries, and server-rendered <strong>Jinja2</strong> templates — no heavy ORM, minimal frontend overhead.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/elite-coder-2026/vantage-point">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.7 5.38-5.27 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          View on GitHub
+        </a>
+        <a class="btn btn-ghost" href="#features">Explore features</a>
+      </div>
+      <div class="badges" aria-label="Technologies">
+        <span class="badge">python 3.11+</span>
+        <span class="badge">fastapi</span>
+        <span class="badge">postgresql</span>
+        <span class="badge">jinja2</span>
+        <span class="badge">license: MIT</span>
+      </div>
+    </div>
+  </div>
+
+  <section id="features" aria-labelledby="features-h">
+    <div class="wrap">
+      <h2 id="features-h">Key Capabilities &amp; Features</h2>
+      <p class="sub">Designed around direct database interactions and clean system architecture, with high-throughput, raw parameterized SQL executed directly against PostgreSQL.</p>
+      <div class="grid">
+        <article class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></div>
+          <h3>Multi-Format Content Streams</h3>
+          <p>Publish, index, and render text, high-resolution images, video, audio, documents, geolocated pins, and external link embeds.</p>
+        </article>
+        <article class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Social Graph Architecture</h3>
+          <p>User accounts, bidirectional follows, custom user groups, privacy blocking, and account-level permissions.</p>
+        </article>
+        <article class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg></div>
+          <h3>Interaction Engine</h3>
+          <p>Fast processing for likes, nested comments, re-shares, custom bookmarks, and user mentions &amp; hashtags.</p>
+        </article>
+        <article class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+          <h3>Notification Pipeline</h3>
+          <p>Event notifications for user activity, profile avatars, and email password resets via SMTP.</p>
+        </article>
+        <article class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div>
+          <h3>Zero-ORM Performance</h3>
+          <p>All queries live as direct, optimized SQL in <code>app/queries/</code> for predictable execution plans and minimal pool overhead.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="stack" aria-labelledby="stack-h">
+    <div class="wrap">
+      <h2 id="stack-h">Tech Stack &amp; Architecture</h2>
+      <p class="sub">A deliberately small stack: async Python on the server, PostgreSQL underneath, and server-rendered HTML on top.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Layer</th><th scope="col">Technology</th><th scope="col">Key Responsibility</th></tr></thead>
+          <tbody>
+            <tr><td>Backend API</td><td>Python 3.11+ / FastAPI</td><td>Asynchronous request handling, session authentication, routing</td></tr>
+            <tr><td>Database</td><td>PostgreSQL</td><td>Raw parameterized SQL execution, custom migration scripts</td></tr>
+            <tr><td>Templating</td><td>Jinja2 / HTML5</td><td>Server-side HTML generation for low-latency page loads</td></tr>
+            <tr><td>Styles &amp; UI</td><td>CSS3 / JavaScript (ES6)</td><td>Lightweight asset pipeline and async UI interaction toggles</td></tr>
+            <tr><td>Package Manager</td><td><code>uv</code> / <code>pip</code></td><td>Deterministic dependency resolution via <code>pyproject.toml</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="layout" aria-labelledby="layout-h">
+    <div class="wrap">
+      <h2 id="layout-h">Project Layout</h2>
+      <p class="sub">Each domain gets its own module, its own SQL, and its own router.</p>
+<pre aria-label="Project directory tree"><span class="d">app/</span>
+├── main.py            <span class="c"># FastAPI app setup, static mounts, router registration</span>
+├── config.py          <span class="c"># Environment settings (prefixed via VP_)</span>
+├── db.py              <span class="c"># PostgreSQL connection pool allocation</span>
+├── auth.py            <span class="c"># Password hashing, PBKDF2/argon2, session tokens</span>
+├── posts.py           <span class="c"># Feed aggregation, creation pipelines, listings</span>
+├── comments.py        <span class="c"># Threaded comment tree processing</span>
+├── likes.py           <span class="c"># Atomic like/reaction operations</span>
+├── shares.py          <span class="c"># Distribution and repost logic</span>
+├── notify.py          <span class="c"># Event notification handlers</span>
+├── settings.py        <span class="c"># Account privacy and blocklist controls</span>
+├── forgot_password.py <span class="c"># Secure token generation &amp; SMTP handlers</span>
+├── avatar.py          <span class="c"># Multi-type media file storage &amp; avatar pipeline</span>
+├── <span class="d">queries/</span>           <span class="c"># Pure parameterized SQL statements per domain</span>
+├── <span class="d">routers/</span>           <span class="c"># FastAPI route definitions (REST JSON API + HTML renderers)</span>
+├── <span class="d">schemas/</span>           <span class="c"># Pydantic schema validation &amp; data parsing</span>
+├── <span class="d">templates/</span>         <span class="c"># Server-rendered Jinja2 templates</span>
+└── <span class="d">static/</span>            <span class="c"># Native CSS and vanilla JS assets</span>
+<span class="d">migrations/</span>            <span class="c"># Serialized raw SQL migration scripts</span></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Darrell Parkhouse · Vantage Point</span>
+    <a href="https://github.com/elite-coder-2026/vantage-point">github.com/elite-coder-2026/vantage-point</a>
+  </div>
+</footer>
+</body>
+</html>
